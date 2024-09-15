@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pemutar Musik Sederhana</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<div class="player-container">
+    <div class="music-player">
+        <div class="album-cover">
+            <img src="img/album.webp" alt="Album Cover" id="album-cover">
+        </div>
+        <h2 class="song-title" id="song-title">Beautiful In White</h2>
+        <h3 class="artist" id="artist">Shane Filan</h3>
+        <div class="progress-container">
+            <input type="range" id="progress" min="0" value="0">
+        </div>
+        <div class="time-info">
+            <span id="current-time">0:00</span> / <span id="duration">0:00</span>
+        </div>
+        <div class="controls">
+            <i class="bx bx-skip-previous" id="prev"></i>
+            <i class="bx bx-play" id="play"></i>
+            <i class="bx bx-skip-next" id="next"></i>
+        </div>
+        <audio id="audio" src="Shane Filan - Beautiful In White (Official Video)_06-XXOTP3Gc.mp3"></audio>
+    </div>
+</div>
+
+
+    <script>
+      const playBtn = document.getElementById('play');
+        const prevBtn = document.getElementById('prev');
+        const nextBtn = document.getElementById('next');
+        const audio = document.getElementById('audio');
+        const progress = document.getElementById('progress');
+        const currentTimeEl = document.getElementById('current-time');
+        const durationEl = document.getElementById('duration');
+        const albumCover = document.getElementById('album-cover');
+        const songTitleEl = document.getElementById('song-title');
+        const artistEl = document.getElementById('artist');
+
+        let isPlaying = false;
+        let songIndex = 0;
+
+        // Array daftar lagu
+        const songs = [
+            {
+                title: "Beautiful In White",
+                artist: "Shane Filan",
+                src: "songs/Shane Filan.mp3",
+                cover: "img/album.webp"
+            },
+            {
+                title: "HAPPIER",
+                artist: "Olivia Rodrigo",
+                src: "songs/Olivia.mp3",
+                cover: "img/album.webp"
+            },
+            {
+                title: "PERFECT",
+                artist: "Ed Sheeran",
+                src: "songs/Ed Sheeran.mp3",
+                cover: "img/album.webp"
+            }
+        ];
+
+        // Fungsi untuk memuat lagu berdasarkan index
+        function loadSong(song) {
+            songTitleEl.textContent = song.title;
+            artistEl.textContent = song.artist;
+            audio.src = song.src;
+            albumCover.src = song.cover;
+
+            // Reset waktu ketika memuat lagu baru
+            currentTimeEl.textContent = '0:00';
+            durationEl.textContent = '0:00';
+            progress.value = 0;
+        }
+
+        // Fungsi untuk memutar atau menjeda musik
+        function togglePlay() {
+            if (isPlaying) {
+                audio.pause();
+                playBtn.classList.replace('bx-pause', 'bx-play');
+                playBtn.style.color = ''; // Kembalikan warna default
+                albumCover.style.animation = ''; // Hentikan animasi album
+            } else {
+                audio.play();
+                playBtn.classList.replace('bx-play', 'bx-pause');
+                playBtn.style.color = '#ff6ec4'; // Ganti warna tombol saat diputar
+                albumCover.style.animation = 'spin 4s linear infinite'; // Mulai animasi album
+            }
+            isPlaying = !isPlaying;
+        }
+
+        // Animasi putaran gambar album
+        const style = document.createElement('style');
+        style.innerHTML = `
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+`;
+        document.head.appendChild(style);
+
+        // Fungsi untuk memutar lagu berikutnya
+        function nextSong() {
+            songIndex++;
+            if (songIndex > songs.length - 1) {
+                songIndex = 0;
+            }
+            loadSong(songs[songIndex]);
+            if (isPlaying) {
+                audio.play();
+            }
+        }
+
+        // Fungsi untuk memutar lagu sebelumnya
+        function prevSong() {
+            songIndex--;
+            if (songIndex < 0) {
+                songIndex = songs.length - 1;
+            }
+            loadSong(songs[songIndex]);
+            if (isPlaying) {
+                audio.play();
+            }
+        }
+
+        // Update waktu dan progress bar
+        function updateProgress() {
+            const currentTime = audio.currentTime;
+            const duration = audio.duration;
+            progress.value = (currentTime / duration) * 100;
+
+            const currentMinutes = Math.floor(currentTime / 60);
+            const currentSeconds = Math.floor(currentTime % 60);
+            const durationMinutes = Math.floor(duration / 60);
+            const durationSeconds = Math.floor(duration % 60);
+
+            currentTimeEl.textContent = `${currentMinutes}:${currentSeconds < 10 ? '0' : ''}${currentSeconds}`;
+            if (!isNaN(durationMinutes) && !isNaN(durationSeconds)) {
+                durationEl.textContent = `${durationMinutes}:${durationSeconds < 10 ? '0' : ''}${durationSeconds}`;
+            }
+        }
+
+        // Event listener saat metadata dimuat (untuk mendapatkan durasi)
+        audio.addEventListener('loadedmetadata', () => {
+            const durationMinutes = Math.floor(audio.duration / 60);
+            const durationSeconds = Math.floor(audio.duration % 60);
+            durationEl.textContent = `${durationMinutes}:${durationSeconds < 10 ? '0' : ''}${durationSeconds}`;
+        });
+
+        // Mengatur progress manual
+        progress.addEventListener('input', () => {
+            const duration = audio.duration;
+            audio.currentTime = (progress.value / 100) * duration;
+        });
+
+        // Event listener
+        playBtn.addEventListener('click', togglePlay);
+        nextBtn.addEventListener('click', nextSong);
+        prevBtn.addEventListener('click', prevSong);
+        audio.addEventListener('timeupdate', updateProgress);
+
+        // Auto play lagu berikutnya setelah lagu selesai
+        audio.addEventListener('ended', nextSong);
+
+        // Memuat lagu pertama saat halaman dimuat
+        loadSong(songs[songIndex]);
+
+
+    </script>
+</body>
+
+</html>
